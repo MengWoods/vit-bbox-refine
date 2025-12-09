@@ -25,6 +25,9 @@ TRAIN_IMG_FOLDER = "train_images"
 TRAIN_MASK_FOLDER = "train_masks"
 K_FOLDS = 5 # Define the number of folds
 
+DEBUG_MODE = False      # Set to False for full training
+DEBUG_SAMPLES = 100    # Use only 100 samples for the training subset
+
 # --- Helper Functions ---
 
 def init_model(processor: MaskFormerImageProcessor) -> Tuple[MaskFormerForInstanceSegmentation, optim.AdamW, amp.GradScaler]:
@@ -51,7 +54,8 @@ def evaluate_model(model: MaskFormerForInstanceSegmentation, data_loader: DataLo
     with torch.no_grad(): # Disable gradient calculations
         for batch in data_loader:
             # Move data to GPU (batch['mask_labels'] and batch['class_labels'] remain lists here)
-            batch = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
+
+            batch = move_to_device(batch, device)
 
             with amp.autocast(): # Use mixed precision
                 outputs = model(**batch)
@@ -98,6 +102,18 @@ def train_model_kfold():
         print(f"\n#################################################################")
         print(f"############ FOLD {fold+1}/{K_FOLDS} - START ############################")
         print(f"#################################################################")
+
+        # Convert train_ids to a list for slicing (if it's a numpy array)
+        train_ids = list(train_ids)
+        val_ids = list(val_ids)
+
+        if DEBUG_MODE:
+            # Slice the list to keep only the first N samples
+            train_ids = train_ids[:DEBUG_SAMPLES]
+            # Optionally reduce validation set too, for fast validation
+            val_ids = val_ids[:min(len(val_ids), DEBUG_SAMPLES // 4)]
+
+            print(f"ATTENTION: DEBUG MODE ACTIVE. Reducing train set to {len(train_ids)} samples.")
 
         # 2. Create Data Samplers and Loaders for the current fold
         train_sampler = SubsetRandomSampler(train_ids)
@@ -178,7 +194,6 @@ def train_model_kfold():
 
             # --- Validation Step ---
             val_loss = evaluate_model(model, val_loader, DEVICE)
-
             # Epoch Summary Log
             epoch_time = time.time() - epoch_start_time
             print(f"\n--- FOLD {fold+1}, Epoch {epoch+1} Summary ---")

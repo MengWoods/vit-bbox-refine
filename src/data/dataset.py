@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 import os
 from transformers import MaskFormerImageProcessor
-# Assuming you have the config file correctly set up
+# Import the ID_TO_LABEL mapping and IGNORE_INDEX from configs folder
 from configs.maskformer_config import ID_TO_LABEL, IGNORE_INDEX, MODEL_CHECKPOINT
 from typing import Dict, Any, List
 
