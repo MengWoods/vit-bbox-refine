@@ -20,7 +20,7 @@ OUTPUT_FILE = f"output_detections_{DATETIME_STR}.jpg"
 
 # Generate a date-based directory name (e.g., 'inference_results/2025-12-04')
 DATE_STR = datetime.now().strftime("%Y-%m-%d")
-OUTPUT_ROOT = "inference_results"
+OUTPUT_ROOT = "results/inference_results"
 OUTPUT_DIR = os.path.join(OUTPUT_ROOT, DATE_STR)
 
 # --- Setup ---

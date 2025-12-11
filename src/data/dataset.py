@@ -41,6 +41,8 @@ class CityscapesLikeDataset(Dataset):
             print(f"Error loading files for {img_filename}: {e}. Skipping and returning None.")
             return None # Return None to be filtered by collate_fn
 
+        original_width, original_height = image.size
+
         # The processor handles resizing, normalization, and converting raw masks
         # into the required mask_labels and class_labels for MaskFormer loss.
         inputs = self.processor(
@@ -66,6 +68,8 @@ class CityscapesLikeDataset(Dataset):
             else:
                 result[k] = v # Keep other non-tensor/list items as is
 
+        result['original_height'] = original_height
+        result['original_width'] = original_width
         return result
 
 
@@ -89,9 +93,14 @@ def collate_fn(batch: List[Dict[str, Any]]):
     mask_labels = [item["mask_labels"] for item in batch]
     class_labels = [item["class_labels"] for item in batch]
 
+    original_heights = [item["original_height"] for item in batch]
+    original_widths = [item["original_width"] for item in batch]
+
     return {
         "pixel_values": pixel_values,
         "pixel_mask": pixel_mask,
         "mask_labels": mask_labels, # LIST of Tensors
         "class_labels": class_labels, # LIST of Tensors
+        "original_heights": original_heights,
+        "original_widths": original_widths,
     }
