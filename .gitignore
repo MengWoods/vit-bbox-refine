@@ -212,3 +212,4 @@ __marimo__/
 *.png
 *.jpg
 models/checkpoints/
+results/
